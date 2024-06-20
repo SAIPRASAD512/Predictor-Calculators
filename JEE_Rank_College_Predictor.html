@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rank and College Prediction</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #f7f3fc;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(128, 0, 128, 0.1);
+}
+
+h1 {
+    text-align: center;
+    color: black;
+    font-size: 26px;
+    margin-bottom: 20px;
+}
+
+form {
+    width: 100%;
+    margin-top: 20px;
+}
+
+label,p {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: black;
+    font-size: 16px;
+}
+
+input[type="number"],
+select {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border: 1px solid #d1c4e9;
+    border-radius: 5px;
+    box-sizing: border-box;
+    font-size: 15px;
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    background-color: #603eff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #603eff;
+}
+
+
+#downloadButton {
+    display: block; /* Make the button a block element */
+    margin: 0 auto; /* Center the button horizontally */
+    background-color: #603eff;
+    border: none;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background-color 0.3s;
+}
+
+#downloadButton:hover {
+    background-color: #603eff;
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    background-color: #603eff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#rankOutput1, #rankOutput2 {
+    text-align: center;
+    font-weight: bold;
+}
+
+
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+    margin-top: 20px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+table, th, td {
+    border: 1px solid #d1c4e9;
+}
+
+                    
+th, td {
+    padding: 12px;
+    text-align: left;
+    font-size: 16px;
+}
+
+th {
+    background-color: #ede7f6;
+    color: black;
+}
+
+@media (max-width: 60px) {
+    .container {
+        width: 90%;
+        padding: 15px;
+    }
+
+    table {
+        width: 100%;
+    }
+}
+
+</style>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
+
+</head>
+<body>
+  <div class="container">
+    <h1>JEE Rank Prediction</h1>
+    <label for="marksInput">Enter your marks:</label>
+    <input type="number" id="marksInput" placeholder="Enter your marks">
+
+    
+    <label for="categoryInput">Select your category:</label>
+    <select id="categoryInput" required>
+      <option disabled selected value="">Select Category</option>
+      <option value="OPEN">OPEN/General</option>
+      <option value="OBC-NCL">OBC-NCL</option>
+      <option value="SC">SC</option>
+      <option value="ST">ST</option>
+      <option value="EWS">EWS</option>
+    </select><br>
+
+    <label for="genderInput">Select your gender:</label>
+    <select id="genderInput" required>
+        <option disabled selected value="">Select Gender</option>
+        <option value="Gender-Neutral">Gender-Neutral</option>
+        <option value="Female-only (including Supernumerary)">Female-only (including Supernumerary)</option>
+    </select><br>
+
+    <button id="calculateButton">Calculate Rank and Predict Colleges</button>
+    <p id="rankOutput1"></p>
+    <p id="rankOutput2"></p>
+
+    <button id="downloadPDFButton" style="display: none;" onclick="downloadPDF()">Download PDF</button>
+
+
+    <div class="table-container">
+        <table id="collegeTable">
+            <thead>
+              <tr>
+                <th>Sr.No</th>
+                <th>Institute</th>
+                <th>Program</th>
+                <th>Closing Rank</th>
+                <th>Seat Type</th>
+              </tr>
+            </thead>
+            <tbody id="collegeTableBody"></tbody>
+          </table>
+      
+
+    </div>
+  </div>
+
+<script>
+  const OPENData = [
+    { marks: 360, rank: 1 },
+    { marks: 350, rank: 5 },
+    { marks: 340, rank: 10 },
+    { marks: 330, rank: 15 },
+    { marks: 320, rank: 25 },
+    { marks: 310, rank: 40 },
+    { marks: 300, rank: 60 },
+    { marks: 290, rank: 80 },
+    { marks: 284, rank: 101 },
+    { marks: 269, rank: 201 },
+    { marks: 242, rank: 501 },
+    { marks: 219, rank: 1001 },
+    { marks: 215, rank: 1101 },
+    { marks: 212, rank: 1201 },
+    { marks: 203, rank: 1501 },
+    { marks: 191, rank: 2001 },
+    { marks: 181, rank: 2501 },
+    { marks: 174, rank: 3001 },
+    { marks: 167, rank: 3501 },
+    { marks: 162, rank: 4001 },
+    { marks: 153, rank: 5001 },
+    { marks: 146, rank: 6001 },
+    { marks: 140, rank: 7001 },
+    { marks: 137, rank: 7501 },
+    { marks: 134, rank: 8001 },
+    { marks: 130, rank: 9001 },
+    { marks: 125, rank: 10001 },
+    { marks: 121, rank: 11001 },
+    { marks: 118, rank: 12001 },
+    { marks: 109, rank: 15001 },
+    { marks: 97, rank: 20101 },
+    { marks: 88, rank: 25001 },
+    { marks: 86, rank: 26321 },
+
+  ];
+
+  const OBCNCLData = [
+    { marks: 360, rank: 1 },
+    { marks: 290, rank: 10 },
+    { marks: 234, rank: 101 },
+    { marks: 213, rank: 201 },
+    { marks: 176, rank: 501 },
+    { marks: 152, rank: 1001 },
+    { marks: 139, rank: 1501 },
+    { marks: 130, rank: 2001 },
+    { marks: 122, rank: 2501 },
+    { marks: 116, rank: 3001 },
+    { marks: 110, rank: 3501 },
+    { marks: 106, rank: 4001 },
+    { marks: 102, rank: 4501 },
+    { marks: 98, rank: 5001 },
+    { marks: 94, rank: 5501 },
+    { marks: 91, rank: 6001 },
+    { marks: 88, rank: 6501 },
+    { marks: 86, rank: 7001 },
+    { marks: 83, rank: 7501 },
+    { marks: 81, rank: 8001 },
+    { marks: 79, rank: 8501 },
+    { marks: 77, rank: 9050 },
+
+  ];
+
+  const EWSData = [
+    { marks: 360, rank: 1 },
+    { marks: 323, rank: 5 },
+    { marks: 290, rank: 18 },
+    { marks: 213, rank: 101 },
+    { marks: 190, rank: 201 },
+    { marks: 159, rank: 501 },
+    { marks: 136, rank: 1001 },
+    { marks: 122, rank: 1501 },
+    { marks: 112, rank: 2001 },
+    { marks: 98, rank: 3001 },
+    { marks: 87, rank: 4001 },
+    { marks: 79, rank: 5001 },
+  ];
+
+  const SCData = [
+    { marks: 360, rank: 1 },
+    { marks: 310, rank: 3 },
+    { marks: 290, rank: 10 },
+    { marks: 157, rank: 101 },
+    { marks: 135, rank: 201 },
+    { marks: 107, rank: 501 },
+    { marks: 87, rank: 1001 },
+    { marks: 68, rank: 2001 },
+    { marks: 61, rank: 2501 },
+    { marks: 56, rank: 3001 },
+    { marks: 49, rank: 4001 },
+    { marks: 45, rank: 4501 },
+  ];
+
+  const STData = [
+    { marks: 360, rank: 1 },
+    { marks: 310, rank: 3 },
+    { marks: 290, rank: 10 },
+    { marks: 265, rank: 18 },
+    { marks: 119, rank: 101 },
+    { marks: 97, rank: 201 },
+    { marks: 85, rank: 301 },
+    { marks: 78, rank: 401 },
+    { marks: 72, rank: 501 },
+    { marks: 67, rank: 601 },
+    { marks: 63, rank: 701 },
+    { marks: 60, rank: 801 },
+    { marks: 57, rank: 901 },
+    { marks: 55, rank: 1001 },
+    { marks: 52, rank: 1101 },
+    { marks: 50, rank: 1201 },
+    { marks: 49, rank: 1301 },
+    { marks: 47, rank: 1401 },
+    { marks: 45, rank: 1501 },
+    { marks: 43, rank: 1601 },
+    { marks: 43, rank: 1645 },
+  ];
+
+  // Function to perform cubic spline interpolation
+  function cubicSplineInterpolation(x, y) {
+    const n = x.length;
+    const h = new Array(n - 1);
+    const alpha = new Array(n - 1);
+    const l = new Array(n);
+    const mu = new Array(n);
+    const z = new Array(n);
+    const c = new Array(n);
+    const b = new Array(n - 1);
+    const d = new Array(n - 1);
+
+    for (let i = 0; i < n - 1; i++) {
+        h[i] = x[i + 1] - x[i];
+    }
+
+    for (let i = 1; i < n - 1; i++) {
+        alpha[i] = (3 / h[i]) * (y[i + 1] - y[i]) - (3 / h[i - 1]) * (y[i] - y[i - 1]);
+    }
+
+    l[0] = 1;
+    mu[0] = 0;
+    z[0] = 0;
+    for (let i = 1; i < n - 1; i++) {
+        l[i] = 2 * (x[i + 1] - x[i - 1]) - h[i - 1] * mu[i - 1];
+        mu[i] = h[i] / l[i];
+        z[i] = (alpha[i] - h[i - 1] * z[i - 1]) / l[i];
+    }
+    l[n - 1] = 1;
+    z[n - 1] = 0;
+    c[n - 1] = 0;
+
+    for (let j = n - 2; j >= 0; j--) {
+        c[j] = z[j] - mu[j] * c[j + 1];
+        b[j] = (y[j + 1] - y[j]) / h[j] - h[j] * (c[j + 1] + 2 * c[j]) / 3;
+        d[j] = (c[j + 1] - c[j]) / (3 * h[j]);
+    }
+
+    return function (xValue) {
+        let i = 0;
+        while (x[i] < xValue) {
+            i++;
+        }
+        i = Math.max(0, i - 1);
+        const deltaX = xValue - x[i];
+        return y[i] + (b[i] + (c[i] / 2 + d[i] * deltaX) * deltaX) * deltaX;
+    };
+}
+
+window.onload = function() {
+    document.getElementById("downloadPDFButton").addEventListener("click", () => {
+        const marks = document.getElementById("marksInput").value;
+        const gender = document.getElementById("genderInput").value;
+        const category = document.getElementById("categoryInput").value;
+
+        const hiddenContainer = document.createElement('div');
+        hiddenContainer.innerHTML = `
+            <div style="text-align: center;">
+                <img src="propelldlogo.png" alt="Company Logo" style="margin: auto;">
+            </div>
+            <h2 style="text-align: center;">Predicted Colleges List</h2>
+            <div class="info">
+                <p>Marks: ${marks}</p>
+                <p>Gender: ${gender}</p>
+                <p>Category: ${category}</p>
+            </div>
+        `;
+
+        const completePdfContainer = document.createElement('div');
+        completePdfContainer.appendChild(hiddenContainer);
+        completePdfContainer.appendChild(document.getElementById("collegeTable").cloneNode(true));
+
+        var opt = {
+            margin: 1,
+            filename: 'Predicted_Colleges.pdf',
+            image: { type: 'jpeg', quality: 2 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+        };
+
+        html2pdf().from(completePdfContainer).set(opt).save();
+    });
+};
+
+
+
+function getSurroundingDataPoints(data, marks) {
+    const sortedData = data.sort((a, b) => a.marks - b.marks);
+    let lowerIndex = 0;
+    for (let i = 0; i < sortedData.length; i++) {
+        if (sortedData[i].marks >= marks) {
+            lowerIndex = Math.max(0, i - 1);
+            break;
+        }
+    }
+    const upperIndex = Math.min(sortedData.length - 1, lowerIndex + 3);
+    lowerIndex = Math.max(0, upperIndex - 3);
+    return sortedData.slice(lowerIndex, upperIndex + 1);
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    const button = document.getElementById("calculateButton");
+    const marksInput = document.getElementById("marksInput");
+    const categoryInput = document.getElementById("categoryInput");
+    const genderInput = document.getElementById("genderInput");
+    const rankOutput1 = document.getElementById("rankOutput1");
+    const rankOutput2 = document.getElementById("rankOutput2");
+
+
+    button.addEventListener("click", function (event) {
+        event.preventDefault();
+        const marks = parseInt(marksInput.value);
+        const category = categoryInput.value;
+        const gender = genderInput.value;
+
+        let AIRRank = null;
+        let CatRank = null;
+        
+        if (marks > 360 || marks < 0) {
+            rankOutput1.innerText = "Please enter marks between 0 and 360.";
+            return;
+        }
+
+        let data1, data2;
+        switch (category) {
+            case "OPEN":
+                data1 = OPENData;
+                break;
+            case "OBC-NCL":
+                data1 = OPENData;
+                data2 = OBCNCLData;
+                break;
+            case "EWS":
+                data1 = OPENData;
+                data2 = EWSData;
+                break;
+            case "SC":
+                data1 = OPENData;
+                data2 = SCData;
+                break;
+            case "ST":
+                data1 = OPENData;
+                data2 = STData;
+                break;
+            default:
+                rankOutput1.innerText = "Please select a valid category.";
+                return;
+        }
+
+        const surroundingData = getSurroundingDataPoints(data1, marks);
+        let surroundingData2;
+        if (categoryInput.value !== "OPEN") {
+            surroundingData2 = getSurroundingDataPoints(data2, marks);
+        }
+
+        if (surroundingData.length < 4 || (surroundingData2 && surroundingData2.length < 4)) {
+            rankOutput1.innerText = "Not enough data points for interpolation.";
+            return;
+        }
+
+        const marksArray1 = surroundingData.map(entry => entry.marks);
+        const ranksArray1 = surroundingData.map(entry => entry.rank);
+        const interpFunc1 = cubicSplineInterpolation(marksArray1, ranksArray1);
+
+        let predictedRank1;
+        if (marks > 88) {
+            predictedRank1 = Math.round(interpFunc1(marks));
+            AIRRank = predictedRank1;
+        } else {
+            predictedRank1 = "More than 24435";
+            AIRRank = 24435;
+        }
+
+        let predictedRank2;
+
+        if(category !== "OPEN"){
+
+            if (category === "OBC-NCL" && marks > 234) {
+                predictedRank2 = "Less than 80";
+                CatRank = 80;
+            } else if (category === "OBC-NCL" && marks < 83) {
+                predictedRank2 = "More than 7501";
+                CatRank = 7501;
+            } else if (category === "EWS" && marks > 213) {
+                predictedRank2 = "Less than 100";
+                CatRank = 100;
+            } else if (category === "EWS" && marks < 87) {
+                predictedRank2 = "More than 4001";
+                CatRank = 4001;
+            } else if (category === "SC" && marks > 157) {
+                predictedRank2 = "Less than 100";
+                CatRank = 100;
+            } else if (category === "SC" && marks < 49) {
+                predictedRank2 = "More than 4001";
+                CatRank = 4001;
+            } else if (category === "ST" && marks > 119) {
+                predictedRank2 = "Less than 100";
+                CatRank = 100;
+            } else if (category === "ST" && marks <= 43) {
+                predictedRank2 = "More than 1601";
+                CatRank = 1601;
+            } 
+            else {
+                const marksArray2 = surroundingData2.map(entry => entry.marks);
+                const ranksArray2 = surroundingData2.map(entry => entry.rank);
+                const interpFunc2 = cubicSplineInterpolation(marksArray2, ranksArray2);
+                predictedRank2 = Math.round(interpFunc2(marks));
+                CatRank = predictedRank2;
+            }
+        }
+
+        rankOutput1.innerText = `Predicted AIR Rank: ${predictedRank1}`;
+        if (categoryInput.value !== "OPEN") {
+            rankOutput2.innerText = `Predicted Category Rank: ${predictedRank2}`;
+        }
+        else {
+            rankOutput2.innerText = `Category Rank is not applicable for General/OPEN`;
+        }
+
+
+        fetch('jeecp.txt')
+            .then(response => response.text())
+            .then(data => {
+                const collegeData = parseData(data);
+                displayPredictedColleges(collegeData, AIRRank, CatRank, category, gender);
+                document.getElementById("downloadPDFButton").style.display = "block";
+            })
+
+
+            .catch(error => {
+                console.error('Error fetching the data:', error);
+            });
+            
+
+    });
+
+
+});
+
+function parseData(data) {
+    const lines = data.trim().split('\n');
+    return lines.map(line => {
+        const [institute, program, seatType, gender, closingRank] = line.split('_');
+        return {
+            institute,
+            program,
+            seatType,
+            gender,
+            closingRank: parseInt(closingRank)
+        };
+    });
+}
+
+function displayPredictedColleges(collegeData, rank1, rank2, category, gender) {
+    const tableBody = document.getElementById('collegeTableBody');
+    tableBody.innerHTML = '';
+
+    // Debug: Log input data
+    console.log("collegeData:", collegeData);
+    console.log("rank1:", rank1, "rank2:", rank2, "category:", category, "gender:", gender);
+
+    let index = 1; // Initialize index variable
+
+    let eligibleColleges = collegeData.filter(college => {
+        return college.seatType === "OPEN" && college.gender === gender && rank1 <= college.closingRank;
+    });
+    eligibleColleges.sort((a, b) => a.closingRank - b.closingRank);
+
+    eligibleColleges.forEach(college => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${index}</td>
+            <td>${college.institute}</td>
+            <td>${college.program}</td>
+            <td>${college.closingRank}</td>
+            <td>${college.seatType}</td>
+        `;
+        tableBody.appendChild(row);
+        index++; // Increment index for next row
+    });
+
+    if (category !== "OPEN") {
+        const categoryEligibleColleges = collegeData.filter(college => {
+            return college.seatType === category && college.gender === gender && rank2 <= college.closingRank;
+        });
+        categoryEligibleColleges.sort((a, b) => a.closingRank - b.closingRank);
+
+        if (categoryEligibleColleges.length === 0) {
+            const noResultsRow = document.createElement('tr');
+            noResultsRow.innerHTML = '<td colspan="4">No eligible colleges found for the specified category.</td></tr>';
+            tableBody.appendChild(noResultsRow);
+        } else {
+            categoryEligibleColleges.forEach(college => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index}</td>
+                    <td>${college.institute}</td>
+                    <td>${college.program}</td>
+                    <td>${college.closingRank}</td>
+                    <td>${college.seatType}</td>
+                `;
+                tableBody.appendChild(row);
+                index++; // Increment index for next row
+            });
+        }
+    }
+
+    // Debug: Log the final table content
+    console.log("Final table content:", tableBody.innerHTML);
+}
+
+</script>
+</body>
+</html>
+
+
+

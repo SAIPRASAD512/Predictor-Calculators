@@ -161,6 +161,7 @@
 <body>
     <div class="container">
         <div class="onlyform">
+            <h1>EMI Calculator</h1>
             <form id="roiForm">
                 <label for="loanAmount">Loan Amount (INR):</label>
                 <input type="number" id="loanAmount" placeholder="100000" required>

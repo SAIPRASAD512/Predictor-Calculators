@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Education Loan EMI Calculator</title>
+
+    <style>
+        /* Reset some default styles */
+        body, h1, h2, p, label, input, button, form {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Body style */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* Container styling */
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 20px;
+            max-width: 1200px;
+            width: 100%;
+            margin: 20px;
+        }
+
+        .onlyform, .piechart {
+            background: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            flex: 1;
+        }
+
+        /* Heading styles */
+        h1 {
+            font-size: 2em;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #603eff;
+        }
+
+        h2 {
+            font-size: 1.5em;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        /* Form styles */
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        input, select {
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            border-color: #603eff;
+            outline: none;
+        }
+
+        /* Button styles */
+        button {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #603eff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #4f31cc;
+        }
+
+        /* Results section styling */
+        #results {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border: 1px solid #ddd; /* Outlined box */
+            padding: 20px;
+            border-radius: 5px;
+        }
+
+        .result-item {
+            font-size: 18px;
+            margin-bottom: 10px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .result-item span {
+            font-weight: bold;
+        }
+
+        /* Legend for Pie Chart */
+        .legend {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .legend ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .legend li {
+            display: flex;
+            align-items: center;
+            margin-top: 5px;
+        }
+
+        .legend li span {
+            display: inline-block;
+            width: 20px;
+            height: 10px;
+            margin-right: 5px;
+            border-radius: 3px;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="onlyform">
+            <form id="roiForm">
+                <label for="loanAmount">Loan Amount (INR):</label>
+                <input type="number" id="loanAmount" placeholder="100000" required>
+                
+                <label for="rateOfInterest">Rate of Interest (p.a):</label>
+                <input type="number" id="rateOfInterest" placeholder="7" required>
+                
+                <label for="loanTenure">Loan Tenure (Months):</label>
+                <input type="number" id="loanTenure" placeholder="60" required>
+                            
+                <button type="button" onclick="calculateROI()">Calculate EMI</button>
+            </form>
+            
+            <div id="results">
+                <div class="result-item">
+                    <span>Monthly EMI:</span>
+                    <span id="monthlyEMI"></span>
+                </div>
+                <div class="result-item">
+                    <span>Principal Amount:</span>
+                    <span id="principalAmount"></span>
+                </div>
+                <div class="result-item">
+                    <span>Total Interest:</span>
+                    <span id="totalInterest"></span>
+                </div>
+                <div class="result-item">
+                    <span>Total Amount:</span>
+                    <span id="totalAmount"></span>
+                </div>
+            </div>
+        </div>
+        <div class="piechart" style="position: relative;">
+            <canvas id="myPieChart" width="300" height="300"></canvas>
+            <div class="legend">
+                <ul id="legendList"></ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function compounding(loanAmount, annualRateOfInterest, loanTenure) {
+            // Convert annual interest rate to monthly and percentage to decimal
+            const monthlyRate = (annualRateOfInterest / 100) / 12;
+            // Calculate the monthly payment using the compound interest formula
+            const monthlyPayment = loanAmount * (monthlyRate * Math.pow((1 + monthlyRate), loanTenure)) / (Math.pow((1 + monthlyRate), loanTenure) - 1);
+            return monthlyPayment;
+        }
+
+        function calculateROI() {
+            // Input values or use placeholders
+            const loanAmount = parseFloat(document.getElementById('loanAmount').value || document.getElementById('loanAmount').placeholder);
+            const rateOfInterest = parseFloat(document.getElementById('rateOfInterest').value || document.getElementById('rateOfInterest').placeholder);
+            const loanTenure = parseInt(document.getElementById('loanTenure').value || document.getElementById('loanTenure').placeholder);
+
+            const monthlyEMI = compounding(loanAmount, rateOfInterest, loanTenure);
+            const totalAmount = monthlyEMI * loanTenure;
+            const totalInterest = totalAmount - loanAmount;
+        
+            // Display results
+            document.getElementById('monthlyEMI').innerText = `₹${monthlyEMI.toFixed(2)}`;
+            document.getElementById('principalAmount').innerText = `₹${loanAmount.toFixed(2)}`;
+            document.getElementById('totalInterest').innerText = `₹${totalInterest.toFixed(2)}`;
+            document.getElementById('totalAmount').innerText = `₹${totalAmount.toFixed(2)}`;
+
+            // Update Pie Chart
+            updatePieChart(loanAmount, totalInterest);
+        }
+
+        function updatePieChart(principal, interest) {
+            const data = [
+                { label: 'Principal Amount', value: principal, color: 'rgb(79, 49, 204)' },
+                { label: 'Total Interest', value: interest, color: 'rgb(133, 145, 290)' }
+            ];
+
+            const canvas = document.getElementById('myPieChart');
+            const ctx = canvas.getContext('2d');
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = Math.min(centerX, centerY);
+          
+            let total = 0;
+            data.forEach(item => total += item.value);
+          
+            let startAngle = -Math.PI / 2;
+            data.forEach(item => {
+                const sliceAngle = (item.value / total) * 2 * Math.PI;
+                
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle);
+                ctx.lineTo(centerX, centerY);
+                ctx.fillStyle = item.color;
+                ctx.fill();
+                
+                startAngle += sliceAngle;
+            });
+
+            // Update legend
+            const legendList = document.getElementById('legendList');
+            legendList.innerHTML = '';
+            data.forEach(item => {
+                const li = document.createElement('li');
+                li.innerHTML = `<span style="background-color: ${item.color};"></span>${item.label}`;
+                legendList.appendChild(li);
+            });
+        }
+
+        // Calculate and display results for default values on page load
+        window.onload = function() {
+            calculateROI();
+        };
+    </script>
+</body>
+</html>
